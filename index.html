@@ -1,0 +1,406 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="theme-color" content="#fdcb6e">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <title>Hurry Up Chicken Butt Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        html {
+            -webkit-text-size-adjust: 100%;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+            background: linear-gradient(135deg, #ffeaa7 0%, #fdcb6e 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            min-height: -webkit-fill-available;
+            padding: 20px;
+            padding: max(20px, env(safe-area-inset-top)) max(20px, env(safe-area-inset-right)) max(20px, env(safe-area-inset-bottom)) max(20px, env(safe-area-inset-left));
+            transition: background 0.15s ease;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body.timer-done {
+            animation: flashRed 0.5s ease-in-out infinite;
+        }
+
+        @keyframes flashRed {
+            0%, 100% {
+                background: #d63031;
+            }
+            50% {
+                background: #ff7675;
+            }
+        }
+
+        .container {
+            text-align: center;
+            background: white;
+            padding: clamp(24px, 6vw, 60px) clamp(20px, 5vw, 40px);
+            border-radius: 20px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #e17055;
+            font-size: clamp(1.5rem, 5vw, 2.5rem);
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .chicken-emoji {
+            font-size: clamp(3rem, 10vw, 4em);
+            margin: 20px 0;
+            animation: bounce 2s infinite;
+        }
+
+        @keyframes bounce {
+            0%, 100% {
+                transform: translateY(0);
+            }
+            50% {
+                transform: translateY(-10px);
+            }
+        }
+
+        .status {
+            font-size: clamp(1.1rem, 4vw, 1.5rem);
+            color: #636e72;
+            margin: 20px 0;
+            min-height: 40px;
+            font-weight: 600;
+        }
+
+        .timer-running {
+            color: #00b894;
+        }
+
+        .timer-finished {
+            color: #d63031;
+            animation: pulse 1s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: 0.5;
+            }
+        }
+
+        .buttons {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        button {
+            color: white;
+            border: none;
+            padding: 20px 60px;
+            min-height: 48px;
+            min-width: 120px;
+            font-size: clamp(1.1rem, 4vw, 1.5rem);
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            font-weight: bold;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        #startBtn {
+            background: linear-gradient(135deg, #e17055 0%, #d63031 100%);
+            box-shadow: 0 4px 15px rgba(225, 112, 85, 0.4);
+        }
+
+        #startBtn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(225, 112, 85, 0.6);
+        }
+
+        #stopBtn {
+            background: linear-gradient(135deg, #636e72 0%, #2d3436 100%);
+            box-shadow: 0 4px 15px rgba(99, 110, 114, 0.4);
+        }
+
+        #stopBtn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(99, 110, 114, 0.6);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            background: #b2bec3;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #stopBtn {
+            display: none;
+        }
+
+        #stopBtn.visible {
+            display: inline-block;
+        }
+
+        .tick-indicator {
+            width: 20px;
+            height: 20px;
+            background: #00b894;
+            border-radius: 50%;
+            margin: 20px auto;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        .tick-indicator.active {
+            opacity: 1;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Hurry Up Chicken Butt!</h1>
+        <div class="chicken-emoji">🐔</div>
+        <div class="status" id="status">Ready to play?</div>
+        <div class="tick-indicator" id="tickIndicator"></div>
+        <div class="buttons">
+            <button id="startBtn" onclick="startTimer()">Start Timer</button>
+            <button id="stopBtn" onclick="stopTimer()">Stop</button>
+        </div>
+    </div>
+
+    <script>
+        // ─── Reconfigure the timer here ─────────────────────────────
+        const CONFIG = {
+            timerSecondsMin: 45,
+            timerSecondsMax: 120,
+            tickIntervalMs: 1000,
+            cluckVolume: 0.6,
+            finishVolume: 1,
+            buzzerDurationMs: 500,
+            buzzerFrequency: 250,
+            buzzerVolume: 0.8,
+            cluckDelayMinMs: 500,
+            cluckDelayMaxMs: 2000,
+            readyAgainDelayMs: 1000
+        };
+        // ────────────────────────────────────────────────────────────
+
+        let timerInterval = null;
+        let tickInterval = null;
+        let timeRemaining = 0;
+        let currentAudio = null;
+        let wakeLockSentinel = null;
+
+        async function requestWakeLock() {
+            if (!navigator.wakeLock) return;
+            try {
+                wakeLockSentinel = await navigator.wakeLock.request('screen');
+                wakeLockSentinel.addEventListener('release', () => { wakeLockSentinel = null; });
+            } catch (err) {
+                console.log('Wake Lock not available:', err.message);
+            }
+        }
+
+        function releaseWakeLock() {
+            if (wakeLockSentinel) {
+                wakeLockSentinel.release().catch(() => {});
+                wakeLockSentinel = null;
+            }
+        }
+
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && timerInterval !== null) {
+                requestWakeLock();
+            }
+        });
+
+        // Sound files
+        const cluckSounds = [
+            'clucks/clucking1.mp3',
+            'clucks/clucking2.mp3',
+            'clucks/clucking3.mp3',
+            'clucks/clucking4.mp3'
+        ];
+        const finishSound = 'clucks/alarm.mp3';
+        
+        // Light tick sound (we'll use Web Audio API to generate it)
+        const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        
+        function playTick() {
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.1, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.05);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.05);
+            
+            // Visual indicator
+            const indicator = document.getElementById('tickIndicator');
+            indicator.classList.add('active');
+            setTimeout(() => indicator.classList.remove('active'), 100);
+        }
+        
+        function getRandomCluck() {
+            const randomIndex = Math.floor(Math.random() * cluckSounds.length);
+            return cluckSounds[randomIndex];
+        }
+        
+        function playNextCluck() {
+            if (timeRemaining <= 0) return;
+            
+            const audio = new Audio(getRandomCluck());
+            audio.volume = CONFIG.cluckVolume;
+            currentAudio = audio;
+            
+            audio.play().catch(err => console.log('Error playing audio:', err));
+            
+            audio.addEventListener('ended', () => {
+                currentAudio = null;
+                if (timeRemaining > 0) {
+                    const delay = CONFIG.cluckDelayMinMs + Math.random() * (CONFIG.cluckDelayMaxMs - CONFIG.cluckDelayMinMs);
+                    setTimeout(playNextCluck, delay);
+                }
+            });
+        }
+        
+        function resetToReady() {
+            const btn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const status = document.getElementById('status');
+            
+            clearInterval(timerInterval);
+            clearInterval(tickInterval);
+            timerInterval = null;
+            tickInterval = null;
+            
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            
+            document.body.classList.remove('timer-done');
+            releaseWakeLock();
+            btn.disabled = false;
+            stopBtn.classList.remove('visible');
+            status.textContent = 'Ready to play?';
+            status.className = 'status';
+        }
+        
+        function stopTimer() {
+            resetToReady();
+        }
+        
+        function endTimer() {
+            const btn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const status = document.getElementById('status');
+            
+            clearInterval(timerInterval);
+            clearInterval(tickInterval);
+            
+            if (currentAudio) {
+                currentAudio.pause();
+                currentAudio = null;
+            }
+            
+            stopBtn.classList.remove('visible');
+            status.textContent = "TIME'S UP! 🎉";
+            status.className = 'status timer-finished';
+            document.body.classList.add('timer-done');
+            
+            function playAlarm(onDone) {
+                const finishAudio = new Audio(finishSound);
+                finishAudio.volume = CONFIG.finishVolume;
+                finishAudio.play().catch(err => console.log('Error playing alarm:', err));
+                finishAudio.addEventListener('ended', () => {
+                    setTimeout(() => {
+                        document.body.classList.remove('timer-done');
+                        releaseWakeLock();
+                        btn.disabled = false;
+                        status.textContent = 'Ready to play again?';
+                        status.className = 'status';
+                    }, CONFIG.readyAgainDelayMs);
+                    onDone();
+                });
+            }
+
+            function playBuzzer(onDone) {
+                const durationSec = CONFIG.buzzerDurationMs / 1000;
+                const startTime = audioContext.currentTime;
+                // Hockey-style buzzer: square wave for harsh, arena-horn character
+                const osc = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                osc.connect(gain);
+                gain.connect(audioContext.destination);
+                osc.type = 'square';
+                osc.frequency.value = CONFIG.buzzerFrequency;
+                gain.gain.setValueAtTime(CONFIG.buzzerVolume, startTime);
+                gain.gain.setValueAtTime(CONFIG.buzzerVolume, startTime + durationSec - 0.05);
+                gain.gain.exponentialRampToValueAtTime(0.01, startTime + durationSec);
+                osc.start(startTime);
+                osc.stop(startTime + durationSec);
+                setTimeout(onDone, CONFIG.buzzerDurationMs);
+            }
+
+            playAlarm(() => {});
+        }
+        
+        function startTimer() {
+            const btn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const status = document.getElementById('status');
+            
+            btn.disabled = true;
+            stopBtn.classList.add('visible');
+            requestWakeLock();
+
+            timeRemaining = CONFIG.timerSecondsMin + Math.floor(Math.random() * (CONFIG.timerSecondsMax - CONFIG.timerSecondsMin + 1));
+            status.textContent = 'Timer Running...';
+            status.className = 'status timer-running';
+            
+            tickInterval = setInterval(playTick, CONFIG.tickIntervalMs);
+            
+            timerInterval = setInterval(() => {
+                timeRemaining--;
+                
+                if (timeRemaining <= 0) {
+                    endTimer();
+                }
+            }, CONFIG.tickIntervalMs);
+            
+            playNextCluck();
+        }
+    </script>
+</body>
+</html>
