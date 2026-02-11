@@ -2,6 +2,8 @@
 
 A web timer for the “What’s Up Chicken Butt?” game. No battery required—run it in a browser. Works great on phones: mobile-friendly layout and screen stays on while the timer is running.
 
+**Try it:** [booherbg.github.io/chicken-butt-timer](https://booherbg.github.io/chicken-butt-timer)
+
 ## Features
 
 - Random duration between 45–120 seconds (no countdown shown)
